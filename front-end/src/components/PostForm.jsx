@@ -25,8 +25,8 @@ const PostForm = (props) => {
       console.error(error);
       alert("Gagal membuat postingan");
     } finally {
-      setContent(""); // Memastikan input dibersihkan
-      props.refresh(); // Memastikan refresh tetap dipanggil
+      setContent("");
+      props.refresh();
     }
   };
 

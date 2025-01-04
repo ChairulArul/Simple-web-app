@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import "../styles/post.css";
+import axios from "axios";
 
-// Perbaikan: Nama fungsi menggunakan huruf besar dan sesuai konsistensi penggunaan
 const convertTime = (time) => {
-  const isoDateObject = new Date(time); // Perbaikan: Gunakan Date dengan huruf kapital
+  const isoDateObject = new Date(time);
   const options = {
     year: "numeric",
     month: "long",
@@ -17,6 +17,73 @@ const convertTime = (time) => {
 };
 
 const Post = (props) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [updatedContent, setUpdatedContent] = useState(props.post.post_content);
+  const [comment, setComment] = useState("");
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setUpdatedContent(props.post.post_content); // Reset to original content
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const response = await axios.put(
+        `http://localhost:3001/posts/${props.post.post_id}`,
+        {
+          token: localStorage.getItem("token"),
+          content: updatedContent,
+        }
+      );
+      alert(response.data.message);
+      setIsEditing(false);
+      props.refresh(); // Refresh posts after update
+    } catch (error) {
+      console.error("Error updating post:", error);
+      alert("Failed to update post");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:3001/posts/${props.post.post_id}`,
+        {
+          data: {
+            token: localStorage.getItem("token"),
+          },
+        }
+      );
+      alert(response.data.message);
+      props.refresh(); // Refresh posts after delete
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert("Failed to delete post");
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    try {
+      const response = await axios.post(
+        `http://localhost:3001/posts/${props.post.post_id}/comments`,
+        {
+          token: localStorage.getItem("token"),
+          comment: comment,
+        }
+      );
+      alert(response.data.message);
+      props.refresh(); // Refresh posts after adding comment
+      setComment(""); // Reset comment input
+    } catch (error) {
+      console.error("Error posting comment:", error.message);
+      alert("Failed to post comment");
+    }
+  };
+
   return (
     <div className="post-container">
       <div className="post-header">
@@ -27,14 +94,37 @@ const Post = (props) => {
         />
         <div className="post-info">
           <p className="author">{props.post.sender}</p>
-          {/* Perbaikan: Pastikan nama fungsi sesuai dengan yang dideklarasikan */}
           <p className="time">{convertTime(props.post.created_at)}</p>
         </div>
       </div>
-      <p className="post-content">{props.post.post_content}</p>
+      {isEditing ? (
+        <div>
+          <textarea
+            value={updatedContent}
+            onChange={(e) => setUpdatedContent(e.target.value)}
+          />
+          <button onClick={handleUpdate}>Update</button>
+          <button onClick={handleCancel}>Cancel</button>
+        </div>
+      ) : (
+        <p className="post-content">{props.post.post_content}</p>
+      )}
+
       <div className="post-actions">
-        <button className="like-button">Like</button>
+        <button
+          className="like-button"
+          onClick={() => props.handleLike(props.post.post_id)}
+        >
+          Like
+        </button>
+        {props.post.sender === localStorage.getItem("username") && (
+          <>
+            <button onClick={handleEdit}>Edit</button>
+            <button onClick={handleDelete}>Delete</button>
+          </>
+        )}
       </div>
+
       <div className="post-footer">
         <p className="likes">{props.post.like_count} likes</p>
         {props.post.likers.length ? (
@@ -42,6 +132,26 @@ const Post = (props) => {
             <p className="likes">oleh {props.post.likers.toString()}</p>
           </div>
         ) : null}
+      </div>
+
+      <div className="comments">
+        <textarea
+          placeholder="Add a comment..."
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+        />
+        <button onClick={handleCommentSubmit}>Post Comment</button>
+
+        <div className="comment-list">
+          {props.post.comments &&
+            props.post.comments.map((comment, index) => (
+              <div key={index} className="comment">
+                <p>
+                  {comment.author}: {comment.content}
+                </p>
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   );

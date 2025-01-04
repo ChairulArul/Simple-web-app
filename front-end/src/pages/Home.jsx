@@ -20,6 +20,19 @@ const Home = () => {
     }
   };
 
+  const handleLike = async (postId) => {
+    try {
+      const response = await axios.post("http://localhost:3001/posts/like", {
+        post_id: postId,
+        token: localStorage.getItem("token"),
+      });
+      alert(response.data.message);
+      getPosts(); // Refresh posts after liking
+    } catch (error) {
+      console.error("Error liking post:", error.message);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -36,7 +49,12 @@ const Home = () => {
       <div className="home-container">
         <PostForm refresh={getPosts} />
         {posts.map((post) => (
-          <Post key={post.post_id} post={post} />
+          <Post
+            key={post.post_id}
+            post={post}
+            refresh={getPosts}
+            handleLike={handleLike}
+          />
         ))}
       </div>
     </>
