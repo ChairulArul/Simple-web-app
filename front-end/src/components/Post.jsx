@@ -16,9 +16,9 @@ const convertTime = (time) => {
   return formattedDate;
 };
 
-const Post = (props) => {
+const Post = ({ post = {}, refresh, handleLike }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [updatedContent, setUpdatedContent] = useState(props.post.post_content);
+  const [updatedContent, setUpdatedContent] = useState(post.post_content || "");
   const [comment, setComment] = useState("");
 
   const handleEdit = () => {
@@ -27,13 +27,13 @@ const Post = (props) => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    setUpdatedContent(props.post.post_content); // Reset to original content
+    setUpdatedContent(post.post_content);
   };
 
   const handleUpdate = async () => {
     try {
       const response = await axios.put(
-        `http://localhost:3001/posts/${props.post.post_id}`,
+        `http://localhost:3001/posts/${post.post_id}`,
         {
           token: localStorage.getItem("token"),
           content: updatedContent,
@@ -41,7 +41,7 @@ const Post = (props) => {
       );
       alert(response.data.message);
       setIsEditing(false);
-      props.refresh(); // Refresh posts after update
+      refresh();
     } catch (error) {
       console.error("Error updating post:", error);
       alert("Failed to update post");
@@ -51,7 +51,7 @@ const Post = (props) => {
   const handleDelete = async () => {
     try {
       const response = await axios.delete(
-        `http://localhost:3001/posts/${props.post.post_id}`,
+        `http://localhost:3001/posts/${post.post_id}`,
         {
           data: {
             token: localStorage.getItem("token"),
@@ -59,7 +59,7 @@ const Post = (props) => {
         }
       );
       alert(response.data.message);
-      props.refresh(); // Refresh posts after delete
+      refresh(); // Refresh posts after delete
     } catch (error) {
       console.error("Error deleting post:", error);
       alert("Failed to delete post");
@@ -69,15 +69,15 @@ const Post = (props) => {
   const handleCommentSubmit = async () => {
     try {
       const response = await axios.post(
-        `http://localhost:3001/posts/${props.post.post_id}/comments`,
+        `http://localhost:3001/posts/${post.post_id}/comments`,
         {
           token: localStorage.getItem("token"),
           comment: comment,
         }
       );
       alert(response.data.message);
-      props.refresh(); // Refresh posts after adding comment
-      setComment(""); // Reset comment input
+      refresh();
+      setComment("");
     } catch (error) {
       console.error("Error posting comment:", error.message);
       alert("Failed to post comment");
@@ -93,8 +93,8 @@ const Post = (props) => {
           className="avatar"
         />
         <div className="post-info">
-          <p className="author">{props.post.sender}</p>
-          <p className="time">{convertTime(props.post.created_at)}</p>
+          <p className="author">{post.sender}</p>
+          <p className="time">{convertTime(post.created_at)}</p>
         </div>
       </div>
       {isEditing ? (
@@ -102,45 +102,36 @@ const Post = (props) => {
           <textarea
             value={updatedContent}
             onChange={(e) => setUpdatedContent(e.target.value)}
-            className="edit-textarea"
           />
-          <button onClick={handleUpdate} className="update-button">
-            Update
-          </button>
-          <button onClick={handleCancel} className="cancel-button">
-            Cancel
-          </button>
+          <button onClick={handleUpdate}>Update</button>
+          <button onClick={handleCancel}>Cancel</button>
         </div>
       ) : (
-        <p className="post-content">{props.post.post_content}</p>
+        <p className="post-content">{post.post_content}</p>
       )}
 
       <div className="post-actions">
         <button
           className="like-button"
-          onClick={() => props.handleLike(props.post.post_id)}
+          onClick={() => handleLike(post.post_id)}
         >
           Like
         </button>
-        {props.post.sender === localStorage.getItem("username") && (
+        {post.sender === (localStorage.getItem("username") || "") && (
           <>
-            <button onClick={handleEdit} className="edit-button">
-              Edit
-            </button>
-            <button onClick={handleDelete} className="delete-button">
-              Delete
-            </button>
+            <button onClick={handleEdit}>Edit</button>
+            <button onClick={handleDelete}>Delete</button>
           </>
         )}
       </div>
 
       <div className="post-footer">
-        <p className="likes">{props.post.like_count} likes</p>
-        {props.post.likers.length > 0 && (
+        <p className="likes">{post.like_count} likes</p>
+        {post.likers?.length ? (
           <div className="likers">
-            <p className="likes">oleh {props.post.likers.join(", ")}</p>
+            <p className="likes">oleh {post.likers.toString()}</p>
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="comments">
@@ -148,21 +139,17 @@ const Post = (props) => {
           placeholder="Add a comment..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          className="comment-input"
         />
-        <button onClick={handleCommentSubmit} className="comment-button">
-          Post Comment
-        </button>
+        <button onClick={handleCommentSubmit}>Post Comment</button>
 
         <div className="comment-list">
-          {props.post.comments &&
-            props.post.comments.map((comment, index) => (
-              <div key={index} className="comment">
-                <p>
-                  <strong>{comment.author}</strong>: {comment.content}
-                </p>
-              </div>
-            ))}
+          {post.comments?.map((comment, index) => (
+            <div key={index} className="comment">
+              <p>
+                {comment.author}: {comment.content}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
