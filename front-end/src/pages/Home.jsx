@@ -27,7 +27,7 @@ const Home = () => {
         token: localStorage.getItem("token"),
       });
       alert(response.data.message);
-      getPosts(); // Refresh posts after liking
+      getPosts();
     } catch (error) {
       console.error("Error liking post:", error.message);
     }

@@ -102,9 +102,14 @@ const Post = (props) => {
           <textarea
             value={updatedContent}
             onChange={(e) => setUpdatedContent(e.target.value)}
+            className="edit-textarea"
           />
-          <button onClick={handleUpdate}>Update</button>
-          <button onClick={handleCancel}>Cancel</button>
+          <button onClick={handleUpdate} className="update-button">
+            Update
+          </button>
+          <button onClick={handleCancel} className="cancel-button">
+            Cancel
+          </button>
         </div>
       ) : (
         <p className="post-content">{props.post.post_content}</p>
@@ -119,19 +124,23 @@ const Post = (props) => {
         </button>
         {props.post.sender === localStorage.getItem("username") && (
           <>
-            <button onClick={handleEdit}>Edit</button>
-            <button onClick={handleDelete}>Delete</button>
+            <button onClick={handleEdit} className="edit-button">
+              Edit
+            </button>
+            <button onClick={handleDelete} className="delete-button">
+              Delete
+            </button>
           </>
         )}
       </div>
 
       <div className="post-footer">
         <p className="likes">{props.post.like_count} likes</p>
-        {props.post.likers.length ? (
+        {props.post.likers.length > 0 && (
           <div className="likers">
-            <p className="likes">oleh {props.post.likers.toString()}</p>
+            <p className="likes">oleh {props.post.likers.join(", ")}</p>
           </div>
-        ) : null}
+        )}
       </div>
 
       <div className="comments">
@@ -139,15 +148,18 @@ const Post = (props) => {
           placeholder="Add a comment..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
+          className="comment-input"
         />
-        <button onClick={handleCommentSubmit}>Post Comment</button>
+        <button onClick={handleCommentSubmit} className="comment-button">
+          Post Comment
+        </button>
 
         <div className="comment-list">
           {props.post.comments &&
             props.post.comments.map((comment, index) => (
               <div key={index} className="comment">
                 <p>
-                  {comment.author}: {comment.content}
+                  <strong>{comment.author}</strong>: {comment.content}
                 </p>
               </div>
             ))}

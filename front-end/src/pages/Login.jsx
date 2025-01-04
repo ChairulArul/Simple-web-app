@@ -28,6 +28,7 @@ const Login = () => {
       setLoading(false);
     }
   };
+
   return (
     <div className="login-container">
       <form className="login-form" onSubmit={handleLogin}>
@@ -47,10 +48,13 @@ const Login = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
         <button disabled={isLoading} type="submit" className="login-button">
-          Login
+          {isLoading ? "Loading..." : "Login"}
         </button>
         <p className="login-here">
-          Belum punya akun? <Link to="/register">Register disini</Link>.
+          Belum punya akun? <Link to="/register">Register disini</Link>
+        </p>
+        <p className="forgot-password">
+          Lupa password? <Link to="/forget-password">Klik disini</Link>
         </p>
       </form>
     </div>

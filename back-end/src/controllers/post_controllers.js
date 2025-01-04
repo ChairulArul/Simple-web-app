@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 const pool = require("../database/database_connection");
 
 // Fungsi untuk menambah postingan
@@ -200,6 +201,84 @@ const addComment = async (req, res) => {
   }
 };
 
+// Fungsi untuk mengirim email
+const sendResetEmail = async (email, token) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail", // Atau gunakan layanan email lain
+    auth: {
+      user: "your-email@gmail.com", // Ganti dengan email Anda
+      pass: "your-email-password", // Ganti dengan password email Anda
+    },
+  });
+
+  const resetUrl = `http://localhost:3000/reset-password/${token}`;
+  const mailOptions = {
+    from: "your-email@gmail.com",
+    to: email,
+    subject: "Password Reset Request",
+    text: `To reset your password, please click the following link: ${resetUrl}`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Error sending email:", error.message);
+  }
+};
+
+// Fungsi untuk meminta reset password
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Cari user berdasarkan email
+    const [user] = await pool.execute("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
+
+    if (user.length === 0) {
+      return res.status(404).json({ message: "Email not found" });
+    }
+
+    // Buat token untuk reset password
+    const token = jwt.sign({ id: user[0].id }, "your-secret-key", {
+      expiresIn: "1h", // Token valid selama 1 jam
+    });
+
+    // Kirim email dengan token untuk reset password
+    await sendResetEmail(email, token);
+
+    res.status(200).json({
+      message: "Password reset email sent successfully",
+    });
+  } catch (error) {
+    console.error("Error handling forgot password:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Fungsi untuk mengatur ulang password
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Verifikasi token
+    const decodedToken = jwt.verify(token, "your-secret-key");
+    const userId = decodedToken.id;
+
+    // Perbarui password user
+    await pool.execute("UPDATE users SET password = ? WHERE id = ?", [
+      newPassword,
+      userId,
+    ]);
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error resetting password:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -207,4 +286,6 @@ module.exports = {
   updatePost,
   deletePost,
   addComment,
+  forgotPassword,
+  resetPassword,
 };
