@@ -33,6 +33,20 @@ const Home = () => {
     }
   };
 
+  const handleDelete = (postId) => {
+    // Hapus postingan dari state lokal
+    const updatedPosts = posts.filter((post) => post.post_id !== postId);
+    setPosts(updatedPosts);
+  };
+
+  const handleUpdate = (postId, newContent) => {
+    // Update postingan di state lokal
+    const updatedPosts = posts.map((post) =>
+      post.post_id === postId ? { ...post, content: newContent } : post
+    );
+    setPosts(updatedPosts);
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -54,6 +68,8 @@ const Home = () => {
             post={post}
             refresh={getPosts}
             handleLike={handleLike}
+            handleDelete={handleDelete} // Tambahkan prop untuk delete
+            handleUpdate={handleUpdate} // Tambahkan prop untuk update
           />
         ))}
       </div>
